@@ -1,0 +1,63 @@
+name: Build & Push Docker image
+
+on:
+  push:
+    branches: [ "main" ]     # build on pushes to main
+    tags: [ "v*" ]           # and on version tags like v1.2.3
+  workflow_dispatch:          # allow manual runs
+
+env:
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/cicd  
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up QEMU (multi-arch, optional)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker meta (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          # Produce sensible tags:
+          # - 'latest' on main
+          # - semver tags on Git tags (v1.2.3 -> 1.2.3, 1.2)
+          # - branch & short SHA on other branches
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}},enable={{is_tag}}
+            type=semver,pattern={{major}}.{{minor}},enable={{is_tag}}
+            type=ref,event=branch
+            type=sha,format=short
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Uncomment to build for multiple architectures:
+          # platforms: linux/amd64,linux/arm64
+          # Build cache (optional):
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
