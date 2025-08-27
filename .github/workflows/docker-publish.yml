@@ -35,12 +35,13 @@ jobs:
           # - 'latest' on main
           # - semver tags on Git tags (v1.2.3 -> 1.2.3, 1.2)
           # - branch & short SHA on other branches
+    
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}},enable={{is_tag}}
-            type=semver,pattern={{major}}.{{minor}},enable={{is_tag}}
-            type=ref,event=branch
-            type=sha,format=short
+              type=raw,value=latest,enable=true
+              type=ref,event=branch
+              type=ref,event=tag
+              type=sha
+
 
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request'
