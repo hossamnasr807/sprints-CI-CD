@@ -1,0 +1,15 @@
+{
+  "name": "sprints-ci-cd",
+  "version": "1.0.0",
+  "description": "Sample Node.js app for Docker + CI/CD pipeline",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "author": "Hossam Nasr",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
